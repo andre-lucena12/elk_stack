@@ -55,7 +55,7 @@ services:
       elasticsearch:
         condition: service_healthy
   metricbeats:
-    image: docker.elastic.co/beats/metricbeat:8.6.1
+    image: docker.elastic.co/beats/metricbeat:8.8.0
     environment:
       - output.logstash.hosts=["logstash:5044"]
     depends_on:
