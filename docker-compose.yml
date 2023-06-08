@@ -1,0 +1,75 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.enabled=false
+      - xpack.ml.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=${LICENSE}
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS}
+    networks:
+      - elk-network
+    volumes:
+      - ./.store/elasticsearch/data:/usr/share/elasticsearch/data
+    mem_limit: ${MEM_LIMIT}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl http://localhost:9200" ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    ports:
+      - 5601:5601
+    environment:
+      - SERVER_NAME=kibana
+      - SERVER_PUBLICBASEURL=http://localhost:5601
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - elk-network
+    volumes:
+      - ./.store/kibana:/usr/share/kibana/data
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: ${MEM_LIMIT}
+  logstash:
+    build: ./logstash
+    ports:
+      - 5044:5044
+    environment:
+      - xpack.monitoring.enabled=true
+    networks:
+      - elk-network
+    volumes:
+      - ./.store/logstash:/usr/share/logstash/data
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+  metricbeats:
+    image: docker.elastic.co/beats/metricbeat:8.6.1
+    environment:
+      - output.logstash.hosts=["logstash:5044"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk-network
+  eland:
+    build: ./eland
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk-network
+networks:
+  elk-network:
+    driver: bridge

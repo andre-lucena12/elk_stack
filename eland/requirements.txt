@@ -1,0 +1,5 @@
+eland
+pandas
+numpy
+scikit-learn
+elasticsearch[async]
