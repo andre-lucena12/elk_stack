@@ -8,9 +8,9 @@ CURRENT_DIR=${shell pwd}
 STORE=${CURRENT_DIR}/.store
 
 cleanup:
-	@${PODMANAGER} compose down
+	@${PODMANAGER}-compose down
 	@rm -r ${STORE}
 
 run:
-	@${PODMANAGER} compose down --remove-orphans
-	@${PODMANAGER} compose up --build
+	@${PODMANAGER}-compose down --remove-orphans
+	@${PODMANAGER}-compose up --build
